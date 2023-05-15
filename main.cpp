@@ -293,28 +293,32 @@ int counter(Cenario* cenario) {
     while (!index_list.empty()) {
 
         int index = index_list.pop_front();
+        int largura = cenario->largura;
 
-        int up = index - cenario->largura;
-        int down = index + cenario->largura;
-        int right = index + 1;
-        int left = index - 1;
+        int x = index / largura;
+        int y = index % largura;
 
-        if ((up >= 0) && (matriz_limpa[up] == false) && (matriz[up] == true)) {
+        int up = (x - 1)* largura + y;
+        int down = (x + 1)* largura + y;
+        int right = (y + 1) + x * largura;
+        int left = (y - 1) + x * largura;
+
+        if (((x - 1) >= 0) && (matriz_limpa[up] == false) && (matriz[up] == true)) {
             index_list.push_back(up);
             matriz_limpa[up] = true;
             count++;
         }
-        if ((down <= size_matriz) && (matriz_limpa[down] == false) && (matriz[down] == true)) {
+        if (((x + 1) < cenario->altura) && (matriz_limpa[down] == false) && (matriz[down] == true)) {
             index_list.push_back(down);
             matriz_limpa[down] = true;
             count++;
         }
-        if ((right <= size_matriz) && (matriz_limpa[right] == false) && (matriz[right] == true)) {
+        if (((y + 1) < largura) && (matriz_limpa[right] == false) && (matriz[right] == true)) {
             index_list.push_back(right);
             matriz_limpa[right] = true;
             count++;
         }
-        if ((left >= 0) && (matriz_limpa[left] == false) && (matriz[left] == true)) {
+        if (((y - 1) >= 0) && (matriz_limpa[left] == false) && (matriz[left] == true)) {
             index_list.push_back(left);
             matriz_limpa[left] = true;
             count++;
