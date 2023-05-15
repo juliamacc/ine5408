@@ -4,12 +4,9 @@
 #include <string>
 #include <cstring>
 #include <iostream>
-#include <exception>
 #include <fstream>
 
-#include "parse.h"
 #include "array_stack.h"
-#include "array_queue.h"
 #include "linked_list.h"
 
 using namespace structures;
@@ -50,6 +47,87 @@ struct Cenario {
     }
 };
 
+// Classe com as funções para ler as strings
+class LeitorString {
+public:
+    LeitorString(const std::string& string) : str(string) {}
+
+    char get_i() {
+        return str[i];
+    }
+
+    char caracter(char ch = 0) {
+        char p = str[i];
+        
+        if (!ch || ch == p) {
+            i++;
+            return p;
+        }
+        return 0;
+    }
+
+    std::string palavra() {
+        int start = i;
+        char ch = str[i];
+
+        while(ch && !isspace(ch) && ch != '<' && ch != '>') {
+            i++;
+            ch = str[i];
+        }
+        return str.substr(start, i - start);
+    }
+
+    std::string limite(char ch) {
+        int start = i;
+        while(str[i] && str[i] != ch) {
+            i++;
+        }
+        return str.substr(start, i - start);
+    }
+
+    void tirar_espaco() {
+        while (str[i] && isspace(str[i])) {
+            i++;
+        }
+    }
+
+    char expect(char ch) {
+        char result = caracter(ch);
+        if (!result) {
+            throw std::runtime_error(std::string("Expected character '") + ch + "'. Got '" + str[i] + "'.");
+        }
+        return result;
+    }
+
+    struct Tag {
+        std::string key = "";
+        bool is_closing = false;
+    };
+    Tag analisa_tag() {
+        expect('<');
+        bool is_closing = caracter('/');
+        tirar_espaco();
+
+        std::string key = palavra();
+
+        tirar_espaco();
+        expect('>');
+        Tag tag;
+        tag.is_closing = is_closing;
+        tag.key = key;
+
+        return tag;
+    }
+
+    LeitorString& operator++() {
+        ++i;
+        return *this;
+    }
+
+private:
+    const std::string& str;
+    int i = 0;
+};
 
 std::string read_file(char* xmlfilename);
 bool* matriz_str_to_array(std::string& matriz_string);
@@ -83,7 +161,7 @@ int main() {
         count = counter(&cenario);
         std::cout << cenario.nome << " " << count << std::endl;
     }
-    
+
 
     // std::cout << xmlfilename << std::endl;  // esta linha deve ser removida
 
@@ -132,7 +210,7 @@ void parse (const std::string &input, LinkedList<Cenario> &lista_cenarios) {
             std::string current = stack.pop();
 
             if (current != tag.key) {
-                throw parse_error(cenario.nome);
+                throw std::runtime_error(cenario.nome);
             }
 
             if (tag.key == "cenario") {
@@ -161,7 +239,7 @@ void parse (const std::string &input, LinkedList<Cenario> &lista_cenarios) {
 
     // Check size of the stack after the parse
     if (stack.size()) {
-        throw parse_error("xml structure erro");
+        throw std::runtime_error("xml structure erro");
     }
 }
 

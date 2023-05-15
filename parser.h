@@ -4,18 +4,6 @@
 #include <iostream>
 #include <exception>
 
-class parse_error : std::exception {
-    std::string message;
-
- public:
-    parse_error() : message("") {}
-    parse_error(std::string msg) : message(msg) {}
-
-    virtual const char* what() const throw() {
-        return message.c_str();
-    }
-};
-
 class LeitorString {
 public:
     LeitorString(const std::string& string) : str(string) {}
@@ -25,7 +13,7 @@ public:
     }
 
     char caracter(char ch = 0) {
-        char p = get_i();
+        char p = str[i];
         
         if (!ch || ch == p) {
             i++;
@@ -36,25 +24,25 @@ public:
 
     std::string palavra() {
         int start = i;
-        char ch = get_i();
+        char ch = str[i];
 
         while(ch && !isspace(ch) && ch != '<' && ch != '>') {
             i++;
-            ch = get_i();
+            ch = str[i];
         }
         return str.substr(start, i - start);
     }
 
     std::string limite(char ch) {
         int start = i;
-        while(get_i() && get_i() != ch) {
+        while(str[i] && str[i] != ch) {
             i++;
         }
         return str.substr(start, i - start);
     }
 
     void tirar_espaco() {
-        while (get_i() && isspace(get_i())) {
+        while (str[i] && isspace(str[i])) {
             i++;
         }
     }
@@ -62,7 +50,7 @@ public:
     char expect(char ch) {
         char result = caracter(ch);
         if (!result) {
-            throw parse_error(std::string("Expected character '") + ch + "'. Got '" + get_i() + "'.");
+            throw std::runtime_error(std::string("Expected character '") + ch + "'. Got '" + str[i] + "'.");
         }
         return result;
     }
