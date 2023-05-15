@@ -9,6 +9,7 @@
 
 #include "parse.h"
 #include "array_stack.h"
+#include "array_queue.h"
 #include "linked_list.h"
 
 using namespace structures;
@@ -23,8 +24,8 @@ struct Cenario {
     std::string nome;
     int altura;
     int largura;
-    int roboX;
-    int roboY;
+    int X;
+    int Y;
     bool* matriz;
 
     Cenario() {}
@@ -33,15 +34,15 @@ struct Cenario {
         std::string nome,
         int altura,
         int largura,
-        int roboX,
-        int roboY,
+        int X,
+        int Y,
         bool* matriz
     ) :
        nome(nome),
        altura(altura),
        largura(largura),
-       roboX(roboX),
-       roboY(roboY),
+       X(X),
+       Y(Y),
        matriz(matriz) {}
     
     int size() {
@@ -111,15 +112,15 @@ std::string read_file(char* xmlfilename) {
 }
 
 void parse (const std::string &input, LinkedList<Cenario> &lista_cenarios) {
-    StringReader r(input);
+    LeitorString r(input);
     ArrayStack<std::string> stack(100);
     Cenario cenario;
 
-    while (r.peek()) {
-        std::string contents = r.read_until('<');
+    while (r.get_i()) {
+        std::string contents = r.limite('<');
 
-        if (!r.peek()) break;
-        StringReader::Tag tag = r.parse_tag();
+        if (!r.get_i()) break;
+        LeitorString::Tag tag = r.analisa_tag();
 
         if (!tag.is_closing) {  // Check if the tag IS NOT closing
             stack.push(tag.key);    // Push in the stack
@@ -141,10 +142,10 @@ void parse (const std::string &input, LinkedList<Cenario> &lista_cenarios) {
                 cenario.nome = contents;
             }
             else if (tag.key == "x") {
-                cenario.roboX = std::stoi(contents);
+                cenario.X = std::stoi(contents);
             }
             else if (tag.key == "y") {
-                cenario.roboY = std::stoi(contents);
+                cenario.Y = std::stoi(contents);
             }
             else if (tag.key == "largura") {
                 cenario.largura = std::stoi(contents);
@@ -165,11 +166,11 @@ void parse (const std::string &input, LinkedList<Cenario> &lista_cenarios) {
 }
 
 bool* matriz_str_to_array(std::string& matriz_string) {
-    StringReader r(matriz_string);
+    LeitorString r(matriz_string);
 
     std::string trimmed = ""; // Result string without beeing trimmed
 
-    while (char ch = r.peek()) {    // Remove the blank spaces
+    while (char ch = r.get_i()) {    // Remove the blank spaces
         if (!std::isspace(ch)){
             trimmed += ch;
         }
@@ -202,7 +203,7 @@ int counter(Cenario* cenario) {
     }
 
     // Filling the inicial robot space
-    int index_inicial = (cenario->roboY) + ((cenario->roboX) * cenario->largura);
+    int index_inicial = (cenario->Y) + ((cenario->X) * cenario->largura);
     if (matriz[index_inicial] == false) {
         return 0;
     }

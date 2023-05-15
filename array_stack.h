@@ -1,5 +1,3 @@
-//           ESTRUTURA DE PILHA
-
 #ifndef STRUCTURES_ARRAY_STACK_H
 #define STRUCTURES_ARRAY_STACK_H
 
@@ -79,32 +77,29 @@ void structures::ArrayStack<T>::push(const T& data) {
 
 template<typename T>
 T structures::ArrayStack<T>::pop() {
-    if (top_ == -1) {
+    if (empty())
         throw std::out_of_range("pilha vazia");
-    } else {
-        T topo = contents[top_];
-        contents[top_] = 0;
-        top_--;
-        return topo;
-    }
+    T aux;
+    aux = contents[top_];
+    top_--;
+    return aux;
 }
 
 template<typename T>
 T& structures::ArrayStack<T>::top() {
+    if (empty())
+        throw std::out_of_range("pilha vazia");
     return contents[top_];
 }
 
 template<typename T>
 void structures::ArrayStack<T>::clear() {
-    for (int i = 0; i <= top_; i++) {
-        contents[i] = 0;
-    }
     top_ = -1;
 }
 
 template<typename T>
 std::size_t structures::ArrayStack<T>::size() {
-    return top_+1;
+    return top_ + 1;
 }
 
 template<typename T>
@@ -114,10 +109,10 @@ std::size_t structures::ArrayStack<T>::max_size() {
 
 template<typename T>
 bool structures::ArrayStack<T>::empty() {
-    return top_ == -1;
+    return (top_ == -1);
 }
 
 template<typename T>
 bool structures::ArrayStack<T>::full() {
-    return top_+1 == static_cast<int>(max_size_);
+    return (top_ == static_cast<int>(max_size())-1);
 }
