@@ -47,87 +47,71 @@ struct Cenario {
     }
 };
 
-// Classe com as funções para ler as strings
-class LeitorString {
-public:
-    LeitorString(const std::string& string) : str(string) {}
+// Funções para ler as strings
+char get_i(const std::string& str, int i) {
+    return str[i];
+}
 
-    char get_i() {
-        return str[i];
-    }
-
-    char caracter(char ch = 0) {
-        char p = str[i];
+char caracter(const std::string& str, int& i, char ch = 0) {
+    char p = str[i];
         
-        if (!ch || ch == p) {
-            i++;
-            return p;
-        }
-        return 0;
+    if (!ch || ch == p) {
+        i++;
+        return p;
     }
+    return 0;
+}
 
-    std::string palavra() {
-        int start = i;
-        char ch = str[i];
+std::string palavra(const std::string& str, int& i) {
+    int start = i;
+    char ch = str[i];
 
-        while(ch && !isspace(ch) && ch != '<' && ch != '>') {
-            i++;
-            ch = str[i];
-        }
-        return str.substr(start, i - start);
+    while(ch && !isspace(ch) && ch != '<' && ch != '>') {
+        i++;
+        ch = str[i];
     }
+    return str.substr(start, i - start);
+}
 
-    std::string limite(char ch) {
-        int start = i;
-        while(str[i] && str[i] != ch) {
-            i++;
-        }
-        return str.substr(start, i - start);
+std::string limite(const std::string& str, int& i, char ch) {
+    int start = i;
+    while(str[i] && str[i] != ch) {
+        i++;
     }
+    return str.substr(start, i - start);
+}
 
-    void tirar_espaco() {
-        while (str[i] && isspace(str[i])) {
-            i++;
-        }
+void tirar_espaco(const std::string& str, int& i) {
+    while (str[i] && isspace(str[i])) {
+        i++;
     }
+}
 
-    char expect(char ch) {
-        char result = caracter(ch);
-        if (!result) {
-            throw std::runtime_error(std::string("Expected character '") + ch + "'. Got '" + str[i] + "'.");
-        }
-        return result;
+char Espera(const std::string& str, int& i, char ch) {
+    char result = caracter(str, i, ch);
+    if (!result) {
+        throw std::runtime_error(std::string("Espera character '") + ch + "'. Got '" + str[i] + "'.");
     }
+    return result;
+}
 
-    struct Tag {
-        std::string key = "";
-        bool is_closing = false;
-    };
-    Tag analisa_tag() {
-        expect('<');
-        bool is_closing = caracter('/');
-        tirar_espaco();
-
-        std::string key = palavra();
-
-        tirar_espaco();
-        expect('>');
-        Tag tag;
-        tag.is_closing = is_closing;
-        tag.key = key;
-
-        return tag;
-    }
-
-    LeitorString& operator++() {
-        ++i;
-        return *this;
-    }
-
-private:
-    const std::string& str;
-    int i = 0;
+struct Tag {
+    std::string key = "";
+    bool is_closing = false;
 };
+Tag analisa_tag(const std::string& str, int& i) {
+    Espera(str, i, '<');
+    bool is_closing = caracter(str, i, '/');
+
+    std::string key = palavra(str, i);
+
+    Espera(str, i, '>');
+    Tag tag;
+    tag.is_closing = is_closing;
+    tag.key = key;
+
+    return tag;
+}
 
 std::string read_file(char* xmlfilename);
 bool* matriz_str_to_array(std::string& matriz_string);
@@ -190,23 +174,23 @@ std::string read_file(char* xmlfilename) {
 }
 
 void parse (const std::string &input, LinkedList<Cenario> &lista_cenarios) {
-    LeitorString r(input);
+    int i = 0;
     ArrayStack<std::string> stack(100);
     Cenario cenario;
 
-    while (r.get_i()) {
-        std::string contents = r.limite('<');
+    while (get_i(input, i)) {
+        std::string contents = limite(input, i, '<');
 
-        if (!r.get_i()) break;
-        LeitorString::Tag tag = r.analisa_tag();
+        if (!get_i(input, i)) break;
+        Tag tag = analisa_tag(input, i);
 
-        if (!tag.is_closing) {  // Check if the tag IS NOT closing
-            stack.push(tag.key);    // Push in the stack
+        if (!tag.is_closing) {
+            stack.push(tag.key);
 
             if (tag.key == "cenario") {
                 cenario = Cenario();
             }
-        } else {    // If the tag IS closing
+        } else {
             std::string current = stack.pop();
 
             if (current != tag.key) {
@@ -237,29 +221,27 @@ void parse (const std::string &input, LinkedList<Cenario> &lista_cenarios) {
         }
     }
 
-    // Check size of the stack after the parse
     if (stack.size()) {
         throw std::runtime_error("xml structure erro");
     }
 }
 
 bool* matriz_str_to_array(std::string& matriz_string) {
-    LeitorString r(matriz_string);
+    int i = 0;
+    std::string trimmed = ""; 
 
-    std::string trimmed = ""; // Result string without beeing trimmed
-
-    while (char ch = r.get_i()) {    // Remove the blank spaces
+    while (char ch = get_i(matriz_string, i)) {
         if (!std::isspace(ch)){
             trimmed += ch;
         }
-        ++r;    // If it is space, jump cursor to next char
+        ++i;
     }
 
-    int lenght = trimmed.length();
-    bool* matriz = new bool[lenght];
+    int length = trimmed.length();
+    bool* matriz = new bool[length];
 
-    for (int i = 0; i < lenght; i++) {
-        matriz[i] = trimmed[i] - 48;    // ascii to 0 and 1
+    for (int i = 0; i < length; i++) {
+        matriz[i] = trimmed[i] - 48;
     }
 
     return matriz;
