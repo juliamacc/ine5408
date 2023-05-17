@@ -11,7 +11,6 @@
 
 using namespace structures;
 
-
 /*
  * @brief This is a cenario structure, it will storage the cenario variables
  *
@@ -24,23 +23,6 @@ struct Cenario {
     int X;
     int Y;
     bool* matriz;
-
-    Cenario() {}
-
-    Cenario(
-        std::string nome,
-        int altura,
-        int largura,
-        int X,
-        int Y,
-        bool* matriz
-    ) :
-       nome(nome),
-       altura(altura),
-       largura(largura),
-       X(X),
-       Y(Y),
-       matriz(matriz) {}
     
     int size() {
         return altura * largura;
@@ -66,7 +48,7 @@ std::string palavra(const std::string& str, int& i) {
     int start = i;
     char ch = str[i];
 
-    while(ch && !isspace(ch) && ch != '<' && ch != '>') {
+    while(ch && 'a' <= ch && ch <= 'z') {
         i++;
         ch = str[i];
     }
@@ -96,22 +78,10 @@ char Espera(const std::string& str, int& i, char ch) {
 }
 
 struct Tag {
-    std::string key = "";
-    bool is_closing = false;
+    std::string nome = "";
+    bool fecha = false;
 };
-Tag analisa_tag(const std::string& str, int& i) {
-    Espera(str, i, '<');
-    bool is_closing = caracter(str, i, '/');
 
-    std::string key = palavra(str, i);
-
-    Espera(str, i, '>');
-    Tag tag;
-    tag.is_closing = is_closing;
-    tag.key = key;
-
-    return tag;
-}
 
 std::string read_file(char* xmlfilename);
 bool* matriz_str_to_array(std::string& matriz_string);
@@ -179,44 +149,75 @@ void parse (const std::string &input, LinkedList<Cenario> &lista_cenarios) {
     Cenario cenario;
 
     while (get_i(input, i)) {
-        std::string contents = limite(input, i, '<');
+        int start = i;
+        while(input[i] && input[i] != '<') {
+            i++;
+        }
+        std::string value = input.substr(start, i - start);
 
         if (!get_i(input, i)) break;
-        Tag tag = analisa_tag(input, i);
 
-        if (!tag.is_closing) {
-            stack.push(tag.key);
+        // ler tag
+        Espera(input, i, '<');
+        bool fecha = caracter(input, i, '/');
 
-            if (tag.key == "cenario") {
+        std::string nome = palavra(input, i);
+
+        Espera(input, i, '>');
+        Tag tag;
+        tag.fecha = fecha;
+        tag.nome = nome;
+
+
+        if (!tag.fecha) {
+            stack.push(tag.nome);
+
+            if (tag.nome == "cenario") {
                 cenario = Cenario();
             }
         } else {
             std::string current = stack.pop();
 
-            if (current != tag.key) {
+            if (current != tag.nome) {
                 throw std::runtime_error(cenario.nome);
             }
 
-            if (tag.key == "cenario") {
+            if (tag.nome == "cenario") {
                 lista_cenarios.push_back(cenario);
             }
-            else if (tag.key == "nome") {
-                cenario.nome = contents;
+            else if (tag.nome == "nome") {
+                cenario.nome = value;
             }
-            else if (tag.key == "x") {
-                cenario.X = std::stoi(contents);
+            else if (tag.nome == "x") {
+                cenario.X = std::stoi(value);
             }
-            else if (tag.key == "y") {
-                cenario.Y = std::stoi(contents);
+            else if (tag.nome == "y") {
+                cenario.Y = std::stoi(value);
             }
-            else if (tag.key == "largura") {
-                cenario.largura = std::stoi(contents);
+            else if (tag.nome == "largura") {
+                cenario.largura = std::stoi(value);
             }
-            else if (tag.key == "altura") {
-                cenario.altura = std::stoi(contents);
+            else if (tag.nome == "altura") {
+                cenario.altura = std::stoi(value);
             }
-            else if (tag.key == "matriz") {
-                cenario.matriz = matriz_str_to_array(contents);
+            else if (tag.nome == "matriz") {
+                int i = 0;
+                std::string matriz_str = ""; 
+
+                while (char ch = get_i(value, i)) {
+                    if (ch != '\n'){
+                        matriz_str += ch;
+                    }
+                    ++i;
+                }
+
+                int length = matriz_str.length();
+                bool* matriz = new bool[length];
+
+                for (int i = 0; i < length; i++) {
+                    matriz[i] = matriz_str[i] - 48;
+                }
+                cenario.matriz = matriz;
             }
         }
     }
@@ -224,27 +225,6 @@ void parse (const std::string &input, LinkedList<Cenario> &lista_cenarios) {
     if (stack.size()) {
         throw std::runtime_error("xml structure erro");
     }
-}
-
-bool* matriz_str_to_array(std::string& matriz_string) {
-    int i = 0;
-    std::string trimmed = ""; 
-
-    while (char ch = get_i(matriz_string, i)) {
-        if (!std::isspace(ch)){
-            trimmed += ch;
-        }
-        ++i;
-    }
-
-    int length = trimmed.length();
-    bool* matriz = new bool[length];
-
-    for (int i = 0; i < length; i++) {
-        matriz[i] = trimmed[i] - 48;
-    }
-
-    return matriz;
 }
 
 int counter(Cenario* cenario) {
